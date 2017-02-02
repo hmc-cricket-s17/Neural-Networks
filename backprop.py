@@ -15,7 +15,7 @@ from random import shuffle
 class FFnet:
     def __init__(nn, name, size, function, rate):
         """ Feedforward Neural Network                                    """
-	""" nn is the 'self' reference, used in each method               """
+        """ nn is the 'self' reference, used in each method               """
         """ name is a string naming this network.                         """
         """ size is a list of the layer sizes:                            """
         """     The first element of size is understood as the number of  """
@@ -59,14 +59,14 @@ class FFnet:
 
     def describe(nn, noisy):
         """ describe prints a description of this network. """
-        print "---------------------------------------------------------------"
-        print "network", nn.name + ":"
-        print "size =", nn.size
-        print "function =", map(lambda x:x.name, nn.function[1:])
-        print "learning rate =", nn.rate[1:]
+        print ("---------------------------------------------------------------")
+        print ("network", nn.name + ":")
+        print ("size =", nn.size)
+        print ("function =", map(lambda x:x.name, nn.function[1:]))
+        print ("learning rate =", nn.rate[1:])
         if noisy:    
-            print "weight =", roundall(nn.weight[1:], 3)
-            print "bias =", roundall(nn.bias[1:], 3)
+            print ("weight =", roundall(nn.weight[1:], 3))
+            print ("bias =", roundall(nn.bias[1:], 3))
 
     def forward(nn, input):
         """ forward runs the network, given an input vector. """
@@ -157,11 +157,11 @@ class FFnet:
         error = subtract(desired, output)
         wrong = countWrong(error, 0.5)
         if noisy:
-            print nn.name, "input =", input, \
+            print (nn.name, "input =", input, \
                   "desired =", desired, \
                   "output =", roundall(output, 3), \
                   "error =", roundall(error, 3), \
-                  "wrong =", wrong
+                  "wrong =", wrong)
         return wrong
     
     def train(nn, samples, epochs, displayInterval, noisy):
@@ -186,19 +186,19 @@ class FFnet:
                 break   # stop if classification is correct
             if epoch%displayInterval == 0:
                 direction = "decreasing" if MSE < previousMSE else "increasing"
-                print nn.name, "epoch", epoch, "MSE =", round(MSE, 3), "wrong =", \
-                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)", direction
+                print (nn.name, "epoch", epoch, "MSE =", round(MSE, 3), "wrong =", \
+                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)", direction)
             previousMSE = MSE
 
         if noisy:
-            print nn.name, "final weight =", roundall(nn.weight[1:], 3)
-            print nn.name, "final bias =", roundall(nn.bias[1:], 3)
+            print (nn.name, "final weight =", roundall(nn.weight[1:], 3))
+            print (nn.name, "final bias =", roundall(nn.bias[1:], 3))
         wrong = 0
         for sample in samples:
             wrong += nn.assess(sample, noisy)
         wrongpc = 100.0*wrong/(len(samples)*len(output))
-        print nn.name, "final MSE =", round(MSE, 3), "final wrong =", \
-                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)"
+        print (nn.name, "final MSE =", round(MSE, 3), "final wrong =", 
+                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)")
 
     def assessAll(nn, samples):
         """ Assess the network using the specified set of samples.   """
@@ -215,8 +215,8 @@ class FFnet:
             wrong += countWrong(error, 0.5)
         MSE = SSE/len(samples)
         wrongpc = 100.0*wrong/(len(samples)*len(output))
-        print nn.name, "test MSE =", round(MSE, 3), "test wrong =", \
-                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)"
+        print (nn.name, "test MSE =", round(MSE, 3), "test wrong =", \
+                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)")
 
 class ActivationFunction:
     """ ActivationFunction packages a function together with its derivative. """
