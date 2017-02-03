@@ -265,7 +265,7 @@ def subtract(x, y):
     """ Returns the first vector minus the second. """
     n = len(x)
     assert len(y) == n
-    return map(lambda i: x[i]-y[i], range(0, n))
+    return list(map(lambda i: x[i]-y[i], range(0, n)))
 
 def countWrong(L, tolerance):
     """ Returns the number of elements of L with an absolute """
@@ -276,7 +276,7 @@ def countWrong(L, tolerance):
 def roundall(item, n):
     """ Round a list, list of lists, etc. to n decimal places. """
     if type(item) is list:
-        return map(lambda x:roundall(x, n), item)
+        return list(map(lambda x:roundall(x, n), item))
     return round(item, n)
 
 xorSamples = [[[0, 0], [0]], [[0, 1], [1]], [[1, 1], [0]], [[1, 0], [1]]]
@@ -1058,6 +1058,8 @@ cancerTestSamples = [\
 [[0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.2, 0.1, 0.1], [1]] \
 ]
 
+iffSamples = [[[0, 0], [1]], [[0, 1], [0]], [[1, 0], [0]], [[1, 1], [1]]]
+
 # various examples
 
 def xor():
@@ -1096,13 +1098,20 @@ def cancer():
     nnet.train(cancerTrainingSamples, 2000, 100, False)
     nnet.assessAll(cancerTestSamples)
 
+def iff():
+    nnet = FFnet("iff", [2, 1, 1], [logsig, logsig], [0.5, 0.2])
+    nnet.describe(True)
+    nnet.train(iffSamples, 2000, 100, True)
+    nnet.assessAll(iffSamples)
+
 def main():
-    xor( )
-    xor2()
-    vh()
-    letters()
-    toBinary()
-    sine()
-    cancer()
-    
+    #xor( )
+    #xor2()
+    #vh()
+    #letters()
+    #toBinary()
+    #sine()
+    #cancer()
+    iff()
+
 main()
