@@ -1064,6 +1064,11 @@ cancerTestSamples = [\
 [[0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.2, 0.1, 0.1], [1]] \
 ]
 
+
+autoencoder = [[[0] * 16, [0] * 16] for i in range(16)]
+for i in range(16):
+    autoencoder[i][0][i] = 1
+    autoencoder[i][1][i] = 1
 # various examples
 
 def xor():
@@ -1102,15 +1107,21 @@ def cancer():
     nnet.train(cancerTrainingSamples, 2000, 100, False)
     nnet.assessAll(cancerTestSamples)
 
+def encode():
+    nnet = FFnet("autoencoder", [16, 2, 16], [logsig, logsig], [0.2, 0.2])
+    nnet.describe(True)
+    nnet.train(autoencoder, 1000000, 100, False)
+    nnet.assessAll(autoencoder)
+
+
 def main():
-    for i in range(10):
-        sine()
+    #sine()
     #xor( )
     #xor2()
     #vh()
     #letters()
     #toBinary()
-    #
     #cancer()
+    encode()
     
 main()

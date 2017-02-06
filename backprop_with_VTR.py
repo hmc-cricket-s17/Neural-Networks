@@ -199,10 +199,10 @@ class FFnet:
             # We decrease the learning rate and discard the learned weights. 
             # Otherwise, we increase the learning rate
             if MSE / previousMSE > nn.max_perf_inc:
-                nn.rate = [nn.lr_dec*i for i in nn.rate]
+                nn.rate = multiplyAll(nn.rate, nn.lr_dec)
                 nn.weight = copy.copy(nn.prev_weight)
             else:
-                nn.rate = [nn.lr_inc*i for i in nn.rate]
+                nn.rate = multiplyAll(nn.rate, nn.lr_inc)
 
             wrongpc = 100.0*wrong/(len(samples)*len(output))
             if wrong == 0:
@@ -210,7 +210,8 @@ class FFnet:
             if epoch%displayInterval == 0:
                 direction = "decreasing" if MSE < previousMSE else "increasing"
                 print nn.name, "epoch", epoch, "MSE =", round(MSE, 3), "wrong =", \
-                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)", direction
+                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)", direction, \
+                    "learning rate=", nn.rate
             previousMSE = MSE
 
         if noisy:
@@ -301,6 +302,14 @@ def roundall(item, n):
     if type(item) is list:
         return map(lambda x:roundall(x, n), item)
     return round(item, n)
+
+def multiplyAll(list, n):
+    """Multiply all of the elements in the lists"""
+    for i in range(len(list)):
+        if list[i] != []:
+            list[i] = n * list[i]
+    return list
+    
 
 xorSamples = [[[0, 0], [0]], [[0, 1], [1]], [[1, 1], [0]], [[1, 0], [1]]]
 
@@ -1081,6 +1090,12 @@ cancerTestSamples = [\
 [[0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.2, 0.1, 0.1], [1]] \
 ]
 
+
+autoencoder = [[[0] * 16, [0] * 16] for i in range(16)]
+for i in range(16):
+    autoencoder[i][0][i] = 1
+    autoencoder[i][1][i] = 1
+
 # various examples
 
 def xor():
@@ -1119,13 +1134,21 @@ def cancer():
     nnet.train(cancerTrainingSamples, 2000, 100, False)
     nnet.assessAll(cancerTestSamples)
 
+def encode():
+    nnet = FFnet("autoencoder", [16, 2, 16], [logsig, logsig], [0.2, 0.2])
+    nnet.describe(True)
+    nnet.train(autoencoder, 100000, 100, False)
+    nnet.assessAll(autoencoder)
+
+
 def main():
-    #sine(
+    #sine()
     #xor( )
     #xor2()
     #vh()
     #letters()
     #toBinary()
-    cancer()
+    #cancer()
+    encode()
     
 main()
