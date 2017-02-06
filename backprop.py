@@ -16,7 +16,7 @@ from random import shuffle
 class FFnet:
     def __init__(nn, name, size, function, rate):
         """ Feedforward Neural Network                                    """
-        """ nn is the 'self' reference, used in each method               """
+    """ nn is the 'self' reference, used in each method               """
         """ name is a string naming this network.                         """
         """ size is a list of the layer sizes:                            """
         """     The first element of size is understood as the number of  """
@@ -134,7 +134,7 @@ class FFnet:
                 for synapse in range(nn.size[layer - 1]):
                     delta_w = factor * nn.output[layer - 1][synapse] + 0 * nn.last_delta_w[layer][neuron][synapse]
                     nn.last_delta_w[layer][neuron][synapse] = delta_w
-                    nn.weight[layer][neuron][synapse] + delta_w
+                    nn.weight[layer][neuron][synapse] += delta_w
 
     def learn(nn, input, desired):
         """ learn learns by forward propagating input,  """
@@ -1172,7 +1172,5 @@ def main():
     # cancer()
     # iff()
     #encode()
-
-
 
 main()
