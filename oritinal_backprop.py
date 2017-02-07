@@ -47,6 +47,7 @@ class FFnet:
         nn.weight = dummy + [[[randomWeight() for synapse in range(size[layer-1])]
                                               for neuron in range(size[layer])] 
                                               for layer in nn.range1]
+        print "Initial Weight is", nn.weight
 
         nn.bias = dummy+[[randomWeight() for neuron in range(layer)] 
                                          for layer in size1]
@@ -161,7 +162,7 @@ class FFnet:
         nn.forward(input)
         output = nn.output[-1]
         error = subtract(desired, output)
-        wrong = countWrong(error, 0.5)
+        wrong = countWrong(error, 0.05)
         if noisy:
             print nn.name, "input =", input, \
                   "desired =", desired, \
@@ -185,7 +186,7 @@ class FFnet:
             for [x, y] in samples:
                 [output, error] = nn.learn(x, y)
                 SSE += inner(error, error)/len(output)
-                wrong += countWrong(error, 0.5)
+                wrong += countWrong(error, 0.05)
             MSE = SSE/len(samples)
             wrongpc = 100.0*wrong/(len(samples)*len(output))
             if wrong == 0:
@@ -1099,7 +1100,7 @@ def letters():
 def sine():
     nnet = FFnet("sine", [1,16, 4, 1], [tansig, tansig, purelin], [0.4, 0.2, 0.1])
     nnet.describe(False)
-    nnet.train(sineSamples, 100000, 100, True)
+    nnet.train(sineSamples, 5000, 100, True)
 
 def cancer():
     nnet = FFnet("cancer", [9, 5, 1], [logsig, logsig], [0.5, 0.2])
@@ -1110,18 +1111,18 @@ def cancer():
 def encode():
     nnet = FFnet("autoencoder", [16, 2, 16], [logsig, logsig], [0.2, 0.2])
     nnet.describe(True)
-    nnet.train(autoencoder, 1000000, 100, False)
+    nnet.train(autoencoder, 10000000, 10000, False)
     nnet.assessAll(autoencoder)
 
 
 def main():
-    #sine()
+    sine()
     #xor( )
     #xor2()
     #vh()
     #letters()
     #toBinary()
     #cancer()
-    encode()
+    #encode()
     
 main()

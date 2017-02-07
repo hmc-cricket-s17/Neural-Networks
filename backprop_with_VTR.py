@@ -12,6 +12,7 @@ import math
 import random
 from random import shuffle
 import copy
+import data
 
 class FFnet:
     def __init__(nn, name, size, function, rate):
@@ -48,7 +49,6 @@ class FFnet:
         nn.weight = dummy + [[[randomWeight() for synapse in range(size[layer-1])]
                                               for neuron in range(size[layer])] 
                                               for layer in nn.range1]
-
         nn.prev_weight = copy.copy(nn.weight)
 
         nn.bias = dummy+[[randomWeight() for neuron in range(layer)] 
@@ -168,7 +168,7 @@ class FFnet:
         nn.forward(input)
         output = nn.output[-1]
         error = subtract(desired, output)
-        wrong = countWrong(error, 0.5)
+        wrong = countWrong(error, 1)
         if noisy:
             print nn.name, "input =", input, \
                   "desired =", desired, \
@@ -193,7 +193,7 @@ class FFnet:
             for [x, y] in samples:
                 [output, error] = nn.learn(x, y)
                 SSE += inner(error, error)/len(output)
-                wrong += countWrong(error, 0.5)
+                wrong += countWrong(error, 1)
             MSE = SSE/len(samples)
             # If MES is increasing more than pre_determined limit,
             # We decrease the learning rate and discard the learned weights. 
@@ -210,7 +210,7 @@ class FFnet:
             if epoch%displayInterval == 0:
                 direction = "decreasing" if MSE < previousMSE else "increasing"
                 print nn.name, "epoch", epoch, "MSE =", round(MSE, 3), "wrong =", \
-                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)", direction, \
+                    str(wrong) + " (" + str(round(wrongpc, 1)) + "%)", direction, \
                     "learning rate=", nn.rate
             previousMSE = MSE
 
@@ -236,7 +236,7 @@ class FFnet:
             output = nn.forward(x)
             error = subtract(y, output)
             SSE += inner(error, error)/len(output)
-            wrong += countWrong(error, 0.5)
+            wrong += countWrong(error, 1)
         MSE = SSE/len(samples)
         wrongpc = 100.0*wrong/(len(samples)*len(output))
         print nn.name, "test MSE =", round(MSE, 3), "test wrong =", \
@@ -1126,19 +1126,25 @@ def letters():
 def sine():
     nnet = FFnet("sine", [1,16, 4, 1], [tansig, tansig, purelin], [0.4, 0.2, 0.1])
     nnet.describe(False)
-    nnet.train(sineSamples, 100000, 100, True)
+    nnet.train(sineSamples, 5000, 100, True)
 
 def cancer():
     nnet = FFnet("cancer", [9, 5, 1], [logsig, logsig], [0.5, 0.2])
     nnet.describe(False)
-    nnet.train(cancerTrainingSamples, 2000, 100, False)
+    nnet.train(cancerTrainingSamples, 20000, 100, False)
     nnet.assessAll(cancerTestSamples)
 
 def encode():
     nnet = FFnet("autoencoder", [16, 2, 16], [logsig, logsig], [0.2, 0.2])
     nnet.describe(True)
-    nnet.train(autoencoder, 100000, 100, False)
+    nnet.train(autoencoder, 1000000, 10000, False)
     nnet.assessAll(autoencoder)
+
+def house():
+    nnet = FFnet("house", [6, 12, 1], [logsig, purelin], [0.5, 0.2])
+    nnet.describe(True)
+    nnet.train(data.house_data, 2000, 100, False)
+    nnet.assessAll(data.house_test)
 
 
 def main():
@@ -1149,6 +1155,6 @@ def main():
     #letters()
     #toBinary()
     #cancer()
-    encode()
-    
+    #encode()
+    house()
 main()

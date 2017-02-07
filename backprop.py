@@ -15,7 +15,7 @@ from random import shuffle
 class FFnet:
     def __init__(nn, name, size, function, rate):
         """ Feedforward Neural Network                                    """
-    """ nn is the 'self' reference, used in each method               """
+        """ nn is the 'self' reference, used in each method               """
         """ name is a string naming this network.                         """
         """ size is a list of the layer sizes:                            """
         """     The first element of size is understood as the number of  """
@@ -198,7 +198,7 @@ class FFnet:
             wrong += nn.assess(sample, noisy)
         wrongpc = 100.0*wrong/(len(samples)*len(output))
         print nn.name, "final MSE =", round(MSE, 3), "final wrong =", \
-                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)"
+                    str(wrong), " (", str(round(wrongpc, 3)), "%)"
 
     def assessAll(nn, samples):
         """ Assess the network using the specified set of samples.   """
@@ -1114,16 +1114,16 @@ def iff():
 def encode():
     nnet = FFnet("autoencoder", [16, 3, 16], [logsig, logsig], [0.2, 0.2])
     nnet.describe(True)
-    nnet.train(autoencoder, 100000, 100, False)
+    nnet.train(autoencoder, 10000, 100, False)
     nnet.assessAll(autoencoder)
 
 def main():
-    xor( )
-    xor2()
-    vh()
-    letters()
-    toBinary()
-    sine()
-    cancer()
-    
+    #xor( )
+    #xor2()
+    #vh()
+    #letters()
+    #toBinary()
+    #sine()
+    #cancer()
+    #encode()
 main()
