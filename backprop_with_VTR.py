@@ -11,10 +11,12 @@
 import math
 import random
 from random import shuffle
+import copy
+import data
 
 class FFnet:
     def __init__(nn, name, size, function, rate):
-        """ Feedforward Neural Network                                    """
+        """  Feedforward Neural Network                                    """
         """ nn is the 'self' reference, used in each method               """
         """ name is a string naming this network.                         """
         """ size is a list of the layer sizes:                            """
@@ -47,12 +49,22 @@ class FFnet:
         nn.weight = dummy + [[[randomWeight() for synapse in range(size[layer-1])]
                                               for neuron in range(size[layer])] 
                                               for layer in nn.range1]
+        nn.prev_weight = copy.copy(nn.weight)
 
         nn.bias = dummy+[[randomWeight() for neuron in range(layer)] 
                                          for layer in size1]
 
         nn.sensitivity = dummy + [[0 for neuron in range(layer)] 
                                      for layer in size1]
+
+
+        nn.last_delta_w = dummy + [[[0 for synapse in range(size[layer - 1])]
+                                       for neuron in range(size[layer])]
+                                       for layer in nn.range1]
+
+        nn.lr_inc = 1.05
+        nn.lr_dec = 0.7
+        nn.max_perf_inc = 1.05
 
         nn.act = dummy + [[0 for i in range(layer)] 
                              for layer in size1]
@@ -132,8 +144,9 @@ class FFnet:
                 factor = nn.rate[layer]*nn.sensitivity[layer][neuron]
                 nn.bias[layer][neuron] += factor
                 for synapse in range(nn.size[layer-1]):
-                    nn.weight[layer][neuron][synapse] \
-                        += factor*nn.output[layer-1][synapse]
+                    delta_w = factor * nn.output[layer - 1][synapse] + 0.2 * nn.last_delta_w[layer][neuron][synapse]
+                    nn.last_delta_w[layer][neuron][synapse] = delta_w
+                    nn.weight[layer][neuron][synapse] += delta_w
 
     def learn(nn, input, desired):
         """ learn learns by forward propagating input,  """
@@ -155,7 +168,7 @@ class FFnet:
         nn.forward(input)
         output = nn.output[-1]
         error = subtract(desired, output)
-        wrong = countWrong(error, 0.5)
+        wrong = countWrong(error, 1)
         if noisy:
             print nn.name, "input =", input, \
                   "desired =", desired, \
@@ -173,21 +186,32 @@ class FFnet:
 
         previousMSE = float("inf")
         for epoch in range(epochs):
+            nn.prev_weight = copy.copy(nn.weight)
             shuffle(samples)
             SSE = 0
             wrong = 0
             for [x, y] in samples:
                 [output, error] = nn.learn(x, y)
                 SSE += inner(error, error)/len(output)
-                wrong += countWrong(error, 0.5)
+                wrong += countWrong(error, 1)
             MSE = SSE/len(samples)
+            # If MES is increasing more than pre_determined limit,
+            # We decrease the learning rate and discard the learned weights. 
+            # Otherwise, we increase the learning rate
+            if MSE / previousMSE > nn.max_perf_inc:
+                nn.rate = multiplyAll(nn.rate, nn.lr_dec)
+                nn.weight = copy.copy(nn.prev_weight)
+            else:
+                nn.rate = multiplyAll(nn.rate, nn.lr_inc)
+
             wrongpc = 100.0*wrong/(len(samples)*len(output))
             if wrong == 0:
                 break   # stop if classification is correct
             if epoch%displayInterval == 0:
                 direction = "decreasing" if MSE < previousMSE else "increasing"
                 print nn.name, "epoch", epoch, "MSE =", round(MSE, 3), "wrong =", \
-                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)", direction
+                    str(wrong) + " (" + str(round(wrongpc, 1)) + "%)", direction, \
+                    "learning rate=", nn.rate
             previousMSE = MSE
 
         if noisy:
@@ -198,7 +222,7 @@ class FFnet:
             wrong += nn.assess(sample, noisy)
         wrongpc = 100.0*wrong/(len(samples)*len(output))
         print nn.name, "final MSE =", round(MSE, 3), "final wrong =", \
-                    str(wrong), " (", str(round(wrongpc, 3)), "%)"
+                    str(wrong) + " (" + str(round(wrongpc, 3)) + "%)"
 
     def assessAll(nn, samples):
         """ Assess the network using the specified set of samples.   """
@@ -212,7 +236,7 @@ class FFnet:
             output = nn.forward(x)
             error = subtract(y, output)
             SSE += inner(error, error)/len(output)
-            wrong += countWrong(error, 0.5)
+            wrong += countWrong(error, 1)
         MSE = SSE/len(samples)
         wrongpc = 100.0*wrong/(len(samples)*len(output))
         print nn.name, "test MSE =", round(MSE, 3), "test wrong =", \
@@ -278,6 +302,14 @@ def roundall(item, n):
     if type(item) is list:
         return map(lambda x:roundall(x, n), item)
     return round(item, n)
+
+def multiplyAll(list, n):
+    """Multiply all of the elements in the lists"""
+    for i in range(len(list)):
+        if list[i] != []:
+            list[i] = n * list[i]
+    return list
+    
 
 xorSamples = [[[0, 0], [0]], [[0, 1], [1]], [[1, 1], [0]], [[1, 0], [1]]]
 
@@ -1058,7 +1090,6 @@ cancerTestSamples = [\
 [[0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.2, 0.1, 0.1], [1]] \
 ]
 
-iffSamples = [[[0, 0], [1]], [[0, 1], [0]], [[1, 0], [0]], [[1, 1], [1]]]
 
 autoencoder = [[[0] * 16, [0] * 16] for i in range(16)]
 for i in range(16):
@@ -1095,35 +1126,35 @@ def letters():
 def sine():
     nnet = FFnet("sine", [1,16, 4, 1], [tansig, tansig, purelin], [0.4, 0.2, 0.1])
     nnet.describe(False)
-    nnet.train(sineSamples, 100000, 500, True)
+    nnet.train(sineSamples, 5000, 100, True)
 
 def cancer():
     nnet = FFnet("cancer", [9, 5, 1], [logsig, logsig], [0.5, 0.2])
     nnet.describe(False)
-    nnet.train(cancerTrainingSamples, 2000, 100, False)
+    nnet.train(cancerTrainingSamples, 20000, 100, False)
     nnet.assessAll(cancerTestSamples)
 
-
-def iff():
-    nnet = FFnet("iff", [2, 3, 1], [logsig, logsig], [0.5, 0.2])
-    nnet.describe(True)
-    nnet.train(iffSamples, 5000, 100, True)
-    nnet.assessAll(iffSamples)
-
-
 def encode():
-    nnet = FFnet("autoencoder", [16, 3, 16], [logsig, logsig], [0.2, 0.2])
+    nnet = FFnet("autoencoder", [16, 2, 16], [logsig, logsig], [0.2, 0.2])
     nnet.describe(True)
-    nnet.train(autoencoder, 100000, 100, False)
+    nnet.train(autoencoder, 1000000, 10000, False)
     nnet.assessAll(autoencoder)
 
+def house():
+    nnet = FFnet("house", [6, 12, 1], [logsig, purelin], [0.5, 0.2])
+    nnet.describe(True)
+    nnet.train(data.house_data, 2000, 100, False)
+    nnet.assessAll(data.house_test)
+
+
 def main():
+    #sine()
     #xor( )
     #xor2()
     #vh()
     #letters()
     #toBinary()
-    #sine()
     #cancer()
-    encode()
+    #encode()
+    house()
 main()
