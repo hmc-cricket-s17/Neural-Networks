@@ -1114,7 +1114,7 @@ def iff():
 def encode():
     nnet = FFnet("autoencoder", [16, 3, 16], [logsig, logsig], [0.2, 0.2])
     nnet.describe(True)
-    nnet.train(autoencoder, 10000, 100, False)
+    nnet.train(autoencoder, 100000, 100, False)
     nnet.assessAll(autoencoder)
 
 def main():
@@ -1125,5 +1125,5 @@ def main():
     #toBinary()
     #sine()
     #cancer()
-    #encode()
+    encode()
 main()
