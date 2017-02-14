@@ -158,8 +158,8 @@ class RTRLnet:
             nn.updateinput()
             nn.forward()
             # Make a vector with erro in every step within one slot
-            error += nn.backward()
             nn.updateDifOut()
+            error += nn.backward()
             # We need to somehow add up change vectors
             nn.runLength -= 1
             nn.weight = addAll(nn.weight, nn.weight_change)
@@ -186,7 +186,7 @@ class RTRLnet:
             wrongpc = 100.0*wrong/num_input
             if wrong == 0:
                 break   # stop if classification is correct
-            displayInterval = 100
+            displayInterval = 10
             if nn.runLength%(displayInterval * nn.numSlots) == 0:
                 direction = "decreasing" if MSE < previousMSE else "increasing"
                 print nn.name, "length", nn.runLength, "MSE =", round(MSE, 3), "wrong =", \
@@ -277,7 +277,7 @@ def addAll(matrix_0, matrix_1):
 
 
 def simple():
-    nnet = RTRLnet("simple", 10, tansig, 0.01, [[0]], 4, 4000)
+    nnet = RTRLnet("simple", 100, logsig, 0.01, [[7], [0,1,2,3,4,5,6,8,9,10,11,12,13,14], [4, 12], [0, 8, 10]], 16, 40000)
     nnet.describe(True)
     nnet.train(True)
 
