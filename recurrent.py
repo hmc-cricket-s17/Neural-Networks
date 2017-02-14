@@ -47,7 +47,7 @@ class RTRLnet:
         nn.rate = learningRate
         # initialize weights and biases
         nn.weight = [[randomWeight() for output in range(nn.size[1])]
-                                     for layer in range(nn.size[0])]
+                                     for inp in range(nn.size[0])]
 
         # Change the weight for the output so that it doesn't use everything
         nn.sensitivity = [0 for out in range(nn.size[1])]
@@ -55,9 +55,9 @@ class RTRLnet:
                                for layer in range(nn.size[0])]
 
         nn.act = [0 for neuron in range(nn.size[1])]
-        nn.dif_out = [[[randomWeight() for next_output in range(nn.size[1])]
-                                      for inp in range(nn.size[0])]
-                                      for output in range(nn.size[1])]
+        nn.dif_out = [[[0 for next_output in range(nn.size[1])]
+                          for inp in range(nn.size[0])]
+                        for output in range(nn.size[1])]
         # The first half of the equation to compute the value of differential
         # Equations on the previous output with respect to w_ij
         nn.fksk = [0 for neuron in range(nn.size[1])]
@@ -109,9 +109,9 @@ class RTRLnet:
             for inp in range(nn.size[0]):
                 for next_out in range(nn.size[1]):
                     kronecker = 1 if next_out == out else 0
-
+                    weight_out = [weight[next_out] for weight in nn.weight]
                     nn.dif_out[out][inp][next_out] = nn.fksk[next_out] * \
-                    (inner(nn.weight[next_out][nn.numInput+1:-1], nn.dif_out[out][inp][nn.numInput+1:-1])
+                    (inner(weight_out[nn.numInput+1:], nn.dif_out[out][inp])
                      + kronecker*nn.output[0][inp])
 
     def backward(nn):
@@ -143,7 +143,7 @@ class RTRLnet:
         else:
             nn.phase += 1
         # Add one for the bias
-        nn.output[0][:nn.numInput + 1] = music + [1]
+        nn.output[0] = music + [1] + nn.output[1]
 
 
 
@@ -154,18 +154,16 @@ class RTRLnet:
         change_sum = [[0  for output in range(nn.size[1])]
                           for layer in range(nn.size[0])]
         error =[]
-        nn.updateinput()
-        nn.forward()
-        # Make a vector with erro in every step within one slot
-        error = nn.backward()
-        nn.updateDifOut()
-        # We need to somehow add up change vectors
-        #change_sum = addAll(change_sum, nn.weight_change)
-        nn.runLength -= 1
-        nn.weight = addAll(nn.weight, nn.weight_change)
-        #change_ave = [[num / nn.numSlots for num in change_sum[i]]
-        #                             for i in range(len(change_sum))]
-        #nn.weight = addAll(nn.weight, change_ave)
+        for slot in range(nn.numSlots):
+            nn.updateinput()
+            nn.forward()
+            # Make a vector with erro in every step within one slot
+            error += nn.backward()
+            nn.updateDifOut()
+            # We need to somehow add up change vectors
+            nn.runLength -= 1
+            nn.weight = addAll(nn.weight, nn.weight_change)
+            #print nn.weight_change
         wrong = countWrong(error, 0.1)
         return [error, wrong]
 
@@ -181,7 +179,6 @@ class RTRLnet:
         wrong = 1 # Just to initialize wrong and makeing sure it's not 0.
         while wrong != 0 and nn.runLength > 0:
             SSE = 0
-            wrong = 0
             [error, wrong] = nn.learn()
             num_input = len(error)
             SSE += inner(error, error)
@@ -194,7 +191,9 @@ class RTRLnet:
                 direction = "decreasing" if MSE < previousMSE else "increasing"
                 print nn.name, "length", nn.runLength, "MSE =", round(MSE, 3), "wrong =", \
                     str(wrong) + " (" + str(round(wrongpc, 3)) + "%)", direction
+
             previousMSE = MSE
+
 
         if noisy:
             print nn.name, "final weight =", roundall(nn.weight[1:], 3)
@@ -276,8 +275,9 @@ def addAll(matrix_0, matrix_1):
     else:
         return matrix_0 + matrix_1
 
+
 def simple():
-    nnet = RTRLnet("simple", 10, logsig, 10, [[1]], 4, 4000)
+    nnet = RTRLnet("simple", 10, tansig, 0.01, [[0]], 4, 4000)
     nnet.describe(True)
     nnet.train(True)
 
